@@ -6,6 +6,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 
 @RestController
 public class ClientController {
@@ -19,6 +21,19 @@ public class ClientController {
         if(cliente.isEmpty()) throw new RuntimeException("Não foi encontrado cliente com o id " + id);
 
         return ResponseEntity.ok(cliente.get());
+    }
+
+    @GetMapping("/clientes")
+    public ResponseEntity<List<Cliente>> findClientes(@RequestParam(required = false, name = "nome") String nome) {
+        List<Cliente> clientes;
+
+        if(nome != null && !nome.isBlank()) {
+            clientes = clienteRepository.findByNome(nome);
+        } else {
+            clientes = clienteRepository.findAll();
+        }
+
+        return ResponseEntity.ok(clientes);
     }
 
     @PostMapping("/cliente")
