@@ -29,6 +29,18 @@ public class ClientController {
         return ResponseEntity.created(URI.create(novoClienteURL)).body(novoCliente);
     }
 
+    @PutMapping("/cliente/{id}")
+    public ResponseEntity<Cliente> updateClienteById(@PathVariable Long id, @RequestBody Cliente body) {
+        var clienteOptional = clienteRepository.findById(id);
+
+        if(clienteOptional.isEmpty()) throw new RuntimeException("Não foi encontrado cliente com o id " + id);
+
+        var cliente = clienteOptional.get();
+        cliente.setNome(body.getNome());
+
+        return ResponseEntity.ok(clienteRepository.save(cliente));
+    }
+
     @DeleteMapping("/cliente/{id}")
     public ResponseEntity deleteClienteById(@PathVariable Long id) {
         clienteRepository.deleteById(id);
