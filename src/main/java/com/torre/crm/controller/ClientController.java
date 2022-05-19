@@ -1,41 +1,34 @@
 package com.torre.crm.controller;
 
-import java.util.List;
-import java.util.Optional;
-
 import com.torre.ClienteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import javax.websocket.server.PathParam;
-
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
+import java.net.URI;
 
 @RestController
-@RequestMapping("/clientes")
-public class ClientController<string> {
-
+public class ClientController {
     @Autowired
     private ClienteRepository clienteRepository;
 
-    @PostMapping
-    @DeleteMapping("/clientes")
-    @ResponseBody
-    public ResponseEntity deletarCliente(@PathParam("id") Long id) {
-        return new ResponseEntity<String>("Cliente deletado com sucesso", HttpStatus.OK);
+    @GetMapping("/cliente/{id}")
+    public ResponseEntity <Cliente> buscar(@PathVariable ("id") Long id){
+        var cliente = clienteRepository.findById(id);
+
+        if(cliente.isEmpty()) throw new RuntimeException("Não foi encontrado cliente com o id " + id);
+
+        return ResponseEntity.ok(cliente.get());
     }
 
-    @GetMapping("/clientes")
-    @ResponseBody
-    public ResponseEntity <List<Cliente>> buscar(@PathParam("id") Long id){
+    @PostMapping("/cliente")
+    public ResponseEntity<Cliente> adicionar(@RequestBody Cliente cliente){
+        var novoCliente = clienteRepository.save(cliente);
+        var novoClienteURL = "http://localhost:8080/cliente/" + cliente.getId();
 
-       return new ResponseEntity (HttpStatus.OK);
+        return ResponseEntity.created(URI.create(novoClienteURL)).body(novoCliente);
     }
-
-    @ResponseStatus(HttpStatus.CREATED)
-    public Cliente adicionar(@RequestBody Cliente cliente){
-        return clienteRepository.save(cliente);
-    }
-
 }
