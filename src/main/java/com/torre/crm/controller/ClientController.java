@@ -1,41 +1,65 @@
 package com.torre.crm.controller;
 
-import java.util.List;
-import java.util.Optional;
-
 import com.torre.ClienteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.websocket.server.PathParam;
-
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 
 @RestController
-@RequestMapping("/clientes")
-public class ClientController<string> {
-
+public class ClientController {
     @Autowired
     private ClienteRepository clienteRepository;
 
-    @PostMapping
-    @DeleteMapping("/clientes")
-    @ResponseBody
-    public ResponseEntity deletarCliente(@PathParam("id") Long id) {
-        return new ResponseEntity<String>("Cliente deletado com sucesso", HttpStatus.OK);
+    @GetMapping("/cliente/{id}")
+    public ResponseEntity <Cliente> buscar(@PathVariable ("id") Long id){
+        var cliente = clienteRepository.findById(id);
+
+        if(cliente.isEmpty()) throw new RuntimeException("Não foi encontrado cliente com o id " + id);
+
+        return ResponseEntity.ok(cliente.get());
     }
 
     @GetMapping("/clientes")
-    @ResponseBody
-    public ResponseEntity <List<Cliente>> buscar(@PathParam("id") Long id){
+    public ResponseEntity<List<Cliente>> findClientes(@RequestParam(required = false, name = "nome") String nome) {
+        List<Cliente> clientes;
 
-       return new ResponseEntity (HttpStatus.OK);
+        if(nome != null && !nome.isBlank()) {
+            clientes = clienteRepository.findByNome(nome);
+        } else {
+            clientes = clienteRepository.findAll();
+        }
+
+        return ResponseEntity.ok(clientes);
     }
 
-    @ResponseStatus(HttpStatus.CREATED)
-    public Cliente adicionar(@RequestBody Cliente cliente){
-        return clienteRepository.save(cliente);
+    @PostMapping("/cliente")
+    public ResponseEntity<Cliente> adicionar(@RequestBody Cliente cliente){
+        var novoCliente = clienteRepository.save(cliente);
+        var novoClienteURL = "http://localhost:8080/cliente/" + cliente.getId();
+
+        return ResponseEntity.created(URI.create(novoClienteURL)).body(novoCliente);
     }
 
+    @PutMapping("/cliente/{id}")
+    public ResponseEntity<Cliente> updateClienteById(@PathVariable Long id, @RequestBody Cliente body) {
+        var clienteOptional = clienteRepository.findById(id);
+
+        if(clienteOptional.isEmpty()) throw new RuntimeException("Não foi encontrado cliente com o id " + id);
+
+        var cliente = clienteOptional.get();
+        cliente.setNome(body.getNome());
+
+        return ResponseEntity.ok(clienteRepository.save(cliente));
+    }
+
+    @DeleteMapping("/cliente/{id}")
+    public ResponseEntity deleteClienteById(@PathVariable Long id) {
+        clienteRepository.deleteById(id);
+
+        return ResponseEntity.ok().build();
+    }
 }
